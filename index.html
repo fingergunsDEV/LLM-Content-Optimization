@@ -1,0 +1,1027 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Content Optimizer</title>
+  <meta name="description" content="Analyze and optimize content for LLM visibility">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTExNIENvbnRlbnQgT3B0aW1pemVyIiwic2hvcnRfbmFtZSI6IkxMTSBPcHRpbWl6ZXIiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzYzNjZmMSIsImljb25zIjpbeyJzcmMiOiJpY29uLnBuZyIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9wbmcifV19">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f9fafb;
+    }
+    
+    .md3-shadow {
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .md3-button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 1.5rem;
+      font-weight: 500;
+      transition: all 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .md3-button:hover {
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.12);
+      transform: translateY(-1px);
+    }
+    
+    .md3-card {
+      border-radius: 1rem;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .slide-in {
+      animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .loading-dots:after {
+      content: '.';
+      animation: dots 1.5s steps(5, end) infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60% { content: '...'; }
+      80%, 100% { content: ''; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen flex flex-col">
+    <header class="bg-indigo-500 text-white">
+      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 2v6h6" />
+          </svg>
+          <h1 class="text-xl font-bold">LLM Content Optimizer</h1>
+        </div>
+        <nav>
+          <ul class="flex space-x-6">
+            <li><a href="#" class="hover:text-indigo-100 font-medium" onclick="switchTab('dashboard')">Dashboard</a></li>
+            <li><a href="#" class="hover:text-indigo-100 font-medium" onclick="switchTab('optimizer')">Optimizer</a></li>
+            <li><a href="#" class="hover:text-indigo-100 font-medium" onclick="switchTab('analytics')">Analytics</a></li>
+            <li><a href="#" class="hover:text-indigo-100 font-medium" onclick="switchTab('settings')">Settings</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    
+    <main class="flex-grow container mx-auto px-4 py-8">
+      <!-- Dashboard Tab -->
+      <div id="dashboard" class="tab-content hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="md3-card p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Content Score</h3>
+            <div class="flex items-end">
+              <span class="text-4xl font-bold text-indigo-600">78</span>
+              <span class="text-sm text-gray-500 ml-2 mb-1">/100</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">+12% from last week</p>
+            <div class="h-2 bg-gray-200 rounded-full mt-4">
+              <div class="h-2 bg-indigo-500 rounded-full" style="width: 78%"></div>
+            </div>
+          </div>
+          
+          <div class="md3-card p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">LLM Citations</h3>
+            <div class="flex items-end">
+              <span class="text-4xl font-bold text-green-600">24</span>
+              <span class="text-sm text-gray-500 ml-2 mb-1">mentions</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">+8 from last month</p>
+            <div class="h-2 bg-gray-200 rounded-full mt-4">
+              <div class="h-2 bg-green-500 rounded-full" style="width: 65%"></div>
+            </div>
+          </div>
+          
+          <div class="md3-card p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Optimized Content</h3>
+            <div class="flex items-end">
+              <span class="text-4xl font-bold text-blue-600">12</span>
+              <span class="text-sm text-gray-500 ml-2 mb-1">pieces</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">3 pending review</p>
+            <div class="h-2 bg-gray-200 rounded-full mt-4">
+              <div class="h-2 bg-blue-500 rounded-full" style="width: 40%"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="md3-card p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">LLM Visibility Trend</h3>
+            <canvas id="visibilityChart" height="250"></canvas>
+          </div>
+          
+          <div class="md3-card p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Recent Optimizations</h3>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between border-b pb-3">
+                <div>
+                  <h4 class="font-medium">SEO Strategy 2024</h4>
+                  <p class="text-sm text-gray-500">Blog post • 2,450 words</p>
+                </div>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">+42% visibility</span>
+              </div>
+              <div class="flex items-center justify-between border-b pb-3">
+                <div>
+                  <h4 class="font-medium">AI Search Optimization Guide</h4>
+                  <p class="text-sm text-gray-500">Guide • 3,200 words</p>
+                </div>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">+28% visibility</span>
+              </div>
+              <div class="flex items-center justify-between border-b pb-3">
+                <div>
+                  <h4 class="font-medium">Content Marketing Trends</h4>
+                  <p class="text-sm text-gray-500">Article • 1,800 words</p>
+                </div>
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">+15% visibility</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium">Technical SEO Checklist</h4>
+                  <p class="text-sm text-gray-500">Checklist • 1,200 words</p>
+                </div>
+                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">+35% visibility</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Optimizer Tab -->
+      <div id="optimizer" class="tab-content">
+        <div class="md3-card p-6 mb-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">Content Optimizer</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Content Source</label>
+            <div class="flex space-x-4">
+              <button class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-medium text-sm" onclick="setContentSource('paste')">Paste Content</button>
+              <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm" onclick="setContentSource('url')">URL</button>
+              <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm" onclick="setContentSource('file')">Upload File</button>
+            </div>
+          </div>
+          
+          <div id="paste-content" class="content-source-input">
+            <div class="mb-4">
+              <label for="content-title" class="block text-sm font-medium text-gray-700 mb-1">Content Title</label>
+              <input type="text" id="content-title" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your content title">
+            </div>
+            
+            <div class="mb-4">
+              <label for="content-text" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
+              <textarea id="content-text" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Paste your content here..."></textarea>
+            </div>
+          </div>
+          
+          <div id="url-content" class="content-source-input hidden">
+            <div class="mb-4">
+              <label for="content-url" class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+              <input type="url" id="content-url" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://example.com/your-content">
+            </div>
+          </div>
+          
+          <div id="file-content" class="content-source-input hidden">
+            <div class="mb-4">
+              <label for="content-file" class="block text-sm font-medium text-gray-700 mb-1">Upload File</label>
+              <input type="file" id="content-file" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <p class="text-xs text-gray-500 mt-1">Supported formats: .docx, .pdf, .txt, .md</p>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Optimization Goals</label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                <span class="text-sm">LLM Citations</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                <span class="text-sm">Factual Clarity</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                <span class="text-sm">Entity Mapping</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span class="text-sm">Semantic Structure</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span class="text-sm">Domain Authority</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span class="text-sm">AI Readability</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span class="text-sm">Fact Verification</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span class="text-sm">Citation Potential</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="flex justify-end">
+            <button class="md3-button bg-indigo-600 text-white hover:bg-indigo-700" onclick="analyzeContent()">
+              <span class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                </svg>
+                Optimize Now
+              </span>
+            </button>
+          </div>
+        </div>
+        
+        <div id="analysis-results" class="hidden slide-in">
+          <div class="md3-card p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold text-gray-800">Content Analysis</h2>
+              <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">Score: 68/100</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-lg font-medium text-gray-700 mb-3">Strengths</h3>
+                <ul class="space-y-2">
+                  <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Strong factual statements with clear attribution</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Good use of industry terminology and concepts</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Consistent domain expertise throughout</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-medium text-gray-700 mb-3">Improvement Areas</h3>
+                <ul class="space-y-2">
+                  <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Lacks structured entity relationships for LLM parsing</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Key facts need clearer presentation for AI citation</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Semantic structure needs improvement for LLM parsing</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="mt-6">
+              <h3 class="text-lg font-medium text-gray-700 mb-3">Entity Analysis</h3>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="flex flex-wrap gap-2">
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">SEO Strategy</span>
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Content Marketing</span>
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Search Rankings</span>
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">AI Search</span>
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">LLM Optimization</span>
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Semantic Relevance</span>
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Entity Mapping</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="md3-card p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold text-gray-800">Optimized Content</h2>
+              <div class="flex space-x-2">
+                <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium flex items-center" onclick="toggleView('original')">
+                  <span>Original</span>
+                </button>
+                <button class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium flex items-center" onclick="toggleView('optimized')">
+                  <span>Optimized</span>
+                </button>
+                <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium flex items-center" onclick="toggleView('diff')">
+                  <span>Diff View</span>
+                </button>
+              </div>
+            </div>
+            
+            <div id="optimized-content" class="prose max-w-none">
+              <h2>The Future of SEO in an AI-First Search Landscape</h2>
+              
+              <p>The search landscape is undergoing a fundamental transformation with the rise of AI-powered search engines. This shift requires content creators and SEO professionals to adapt their strategies to ensure visibility in AI-generated responses.</p>
+              
+              <h3>Key Factors for LLM Content Optimization</h3>
+              
+              <p><strong>Entity Clarity:</strong> Large Language Models (LLMs) rely heavily on clear entity relationships. Content that explicitly defines entities and their relationships has a 78% higher chance of being cited in AI search results, according to a 2023 study by SearchMetrics.</p>
+              
+              <p><strong>Factual Precision:</strong> LLMs prioritize content with clear, verifiable factual statements. Content with structured fact presentation sees 3.2x more citations in AI-generated responses compared to narrative-heavy content.</p>
+              
+              <p><strong>Semantic Structure:</strong> Content organized with logical semantic structure—including properly nested headings, clear paragraph topics, and consistent terminology—improves LLM comprehension by 64% based on citation analysis.</p>
+              
+              <h3>Implementation Strategy</h3>
+              
+              <ul>
+                <li><strong>Entity Mapping:</strong> Create explicit connections between key entities in your content using structured data and clear relationship statements.</li>
+                <li><strong>Fact Tables:</strong> Present key statistics and facts in structured formats that are easily parsable by LLMs.</li>
+                <li><strong>Semantic Hierarchy:</strong> Organize content with clear H2, H3, and H4 headings that follow logical progression.</li>
+                <li><strong>Domain Consistency:</strong> Maintain consistent terminology and conceptual frameworks throughout your content.</li>
+              </ul>
+              
+              <p>By implementing these strategies, content creators can significantly improve their visibility in AI-powered search results while maintaining high-quality content that serves human readers.</p>
+            </div>
+            
+            <div class="flex justify-between mt-6">
+              <div class="flex space-x-3">
+                <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>Export</span>
+                </button>
+                <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  <span>Save</span>
+                </button>
+              </div>
+              <button class="md3-button bg-indigo-600 text-white hover:bg-indigo-700" onclick="showProjectedImpact()">
+                <span class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                  </svg>
+                  View Projected Impact
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="projected-impact" class="hidden slide-in mt-6">
+          <div class="md3-card p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold text-gray-800">Projected LLM Impact</h2>
+              <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">+42% Visibility</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <canvas id="impactChart" height="250"></canvas>
+              </div>
+              
+              <div>
+                <h3 class="text-lg font-medium text-gray-700 mb-3">Key Improvements</h3>
+                <ul class="space-y-3">
+                  <li class="flex items-start">
+                    <div class="flex-shrink-0 h-5 w-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">+</div>
+                    <div class="ml-3">
+                      <p class="text-sm font-medium">Entity Relationship Clarity</p>
+                      <p class="text-xs text-gray-500">Improved from 45% to 92%</p>
+                    </div>
+                  </li>
+                  <li class="flex items-start">
+                    <div class="flex-shrink-0 h-5 w-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">+</div>
+                    <div class="ml-3">
+                      <p class="text-sm font-medium">Factual Statement Structure</p>
+                      <p class="text-xs text-gray-500">Improved from 62% to 88%</p>
+                    </div>
+                  </li>
+                  <li class="flex items-start">
+                    <div class="flex-shrink-0 h-5 w-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">+</div>
+                    <div class="ml-3">
+                      <p class="text-sm font-medium">Semantic Hierarchy</p>
+                      <p class="text-xs text-gray-500">Improved from 58% to 85%</p>
+                    </div>
+                  </li>
+                  <li class="flex items-start">
+                    <div class="flex-shrink-0 h-5 w-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">+</div>
+                    <div class="ml-3">
+                      <p class="text-sm font-medium">Citation Potential</p>
+                      <p class="text-xs text-gray-500">Improved from 40% to 76%</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="mt-6 border-t pt-4">
+              <h3 class="text-lg font-medium text-gray-700 mb-3">Next Steps</h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:bg-indigo-50 transition-colors cursor-pointer">
+                  <div class="flex items-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z" />
+                      <path d="M9 13h2v5a1 1 0 11-2 0v-5z" />
+                    </svg>
+                    <h4 class="font-medium">Publish Content</h4>
+                  </div>
+                  <p class="text-sm text-gray-600">Push optimized content to your CMS</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:bg-indigo-50 transition-colors cursor-pointer">
+                  <div class="flex items-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clip-rule="evenodd" />
+                    </svg>
+                    <h4 class="font-medium">Track Performance</h4>
+                  </div>
+                  <p class="text-sm text-gray-600">Monitor LLM citations and visibility</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:bg-indigo-50 transition-colors cursor-pointer">
+                  <div class="flex items-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    <h4 class="font-medium">Optimize More</h4>
+                  </div>
+                  <p class="text-sm text-gray-600">Select additional content to optimize</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Analytics Tab -->
+      <div id="analytics" class="tab-content hidden">
+        <div class="md3-card p-6 mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Content Performance</h2>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-gray-500">Time Period:</span>
+              <select class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                <option>Last 30 days</option>
+                <option>Last 90 days</option>
+                <option>Last 6 months</option>
+                <option>Last year</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="text-sm font-medium text-gray-500 mb-1">Total LLM Citations</h3>
+              <div class="flex items-baseline">
+                <span class="text-3xl font-bold text-gray-800">248</span>
+                <span class="ml-2 text-sm text-green-600">+32%</span>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="text-sm font-medium text-gray-500 mb-1">Avg. Citation Rate</h3>
+              <div class="flex items-baseline">
+                <span class="text-3xl font-bold text-gray-800">18.2%</span>
+                <span class="ml-2 text-sm text-green-600">+5.4%</span>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="text-sm font-medium text-gray-500 mb-1">Optimized Content</h3>
+              <div class="flex items-baseline">
+                <span class="text-3xl font-bold text-gray-800">42</span>
+                <span class="ml-2 text-sm text-gray-500">pieces</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <canvas id="analyticsChart" height="300"></canvas>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="md3-card p-6">
+            <h3 class="text-lg font-medium text-gray-700 mb-4">Top Performing Content</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Citations</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <tr>
+                    <td class="px-4 py-3 text-sm">AI Search Optimization Guide</td>
+                    <td class="px-4 py-3 text-sm">42</td>
+                    <td class="px-4 py-3 text-sm">28.4%</td>
+                    <td class="px-4 py-3 text-sm text-green-600">+12.6%</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3 text-sm">SEO Strategy 2024</td>
+                    <td class="px-4 py-3 text-sm">36</td>
+                    <td class="px-4 py-3 text-sm">24.8%</td>
+                    <td class="px-4 py-3 text-sm text-green-600">+9.2%</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3 text-sm">Technical SEO Checklist</td>
+                    <td class="px-4 py-3 text-sm">29</td>
+                    <td class="px-4 py-3 text-sm">19.5%</td>
+                    <td class="px-4 py-3 text-sm text-green-600">+7.8%</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3 text-sm">Content Marketing Trends</td>
+                    <td class="px-4 py-3 text-sm">24</td>
+                    <td class="px-4 py-3 text-sm">16.2%</td>
+                    <td class="px-4 py-3 text-sm text-green-600">+5.4%</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3 text-sm">LLM Optimization Techniques</td>
+                    <td class="px-4 py-3 text-sm">21</td>
+                    <td class="px-4 py-3 text-sm">14.2%</td>
+                    <td class="px-4 py-3 text-sm text-green-600">+4.8%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="md3-card p-6">
+            <h3 class="text-lg font-medium text-gray-700 mb-4">Citation Sources</h3>
+            <div class="h-64">
+              <canvas id="sourcesChart"></canvas>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <div class="bg-gray-50 p-3 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-500 mb-1">Top LLM</h4>
+                <div class="flex items-baseline">
+                  <span class="text-xl font-bold text-gray-800">ChatGPT</span>
+                  <span class="ml-2 text-sm text-gray-500">(42%)</span>
+                </div>
+              </div>
+              <div class="bg-gray-50 p-3 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-500 mb-1">Top Search Engine</h4>
+                <div class="flex items-baseline">
+                  <span class="text-xl font-bold text-gray-800">Bing AI</span>
+                  <span class="ml-2 text-sm text-gray-500">(28%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Settings Tab -->
+      <div id="settings" class="tab-content hidden">
+        <div class="md3-card p-6 mb-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">API Connections</h2>
+          <div class="space-y-6">
+            <div class="flex items-center justify-between pb-4 border-b">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium">Semrush API</h3>
+                  <p class="text-sm text-gray-500">Connect to import keyword and ranking data</p>
+                </div>
+              </div>
+              <button class="md3-button bg-indigo-600 text-white hover:bg-indigo-700">Connect</button>
+            </div>
+            
+            <div class="flex items-center justify-between pb-4 border-b">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium">Ahrefs API</h3>
+                  <p class="text-sm text-gray-500">Connect to import backlink and content data</p>
+                </div>
+              </div>
+              <button class="md3-button bg-indigo-600 text-white hover:bg-indigo-700">Connect</button>
+            </div>
+            
+            <div class="flex items-center justify-between pb-4 border-b">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium">Google Sheets API</h3>
+                  <p class="text-sm text-gray-500">Connect to export optimization data</p>
+                </div>
+              </div>
+              <button class="md3-button bg-indigo-600 text-white hover:bg-indigo-700">Connect</button>
+            </div>
+            
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium">OpenAI API</h3>
+                  <p class="text-sm text-gray-500">Connect for advanced content optimization</p>
+                </div>
+              </div>
+              <div class="flex items-center">
+                <span class="text-sm text-green-600 mr-3">Connected</span>
+                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm">Configure</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="md3-card p-6">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">Optimization Settings</h2>
+          <div class="space-y-6">
+            <div>
+              <h3 class="font-medium mb-2">Default Optimization Goals</h3>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                  <span class="text-sm">LLM Citations</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                  <span class="text-sm">Factual Clarity</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                  <span class="text-sm">Entity Mapping</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                  <span class="text-sm">Semantic Structure</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                  <span class="text-sm">Domain Authority</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                  <span class="text-sm">AI Readability</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="border-t pt-4">
+              <h3 class="font-medium mb-2">Content Analysis</h3>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Entity Recognition Depth</label>
+                  <select class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <option>Standard</option>
+                    <option selected>Advanced</option>
+                    <option>Comprehensive</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Semantic Analysis Level</label>
+                  <select class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    <option>Basic</option>
+                    <option selected>Standard</option>
+                    <option>Advanced</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="border-t pt-4">
+              <h3 class="font-medium mb-2">Export Settings</h3>
+              <div class="space-y-3">
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                  <span class="text-sm">Include original content in exports</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" checked>
+                  <span class="text-sm">Include optimization metrics</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                  <span class="text-sm">Auto-export to Google Sheets</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="flex justify-end pt-4 border-t">
+              <button class="md3-button bg-indigo-600 text-white hover:bg-indigo-700">Save Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <footer class="bg-gray-50 border-t">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <p class="text-sm text-gray-500">© 2024 LLM Content Optimizer • Open Source</p>
+          <div class="flex space-x-4 mt-2 md:mt-0">
+            <a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Documentation</a>
+            <a href="#" class="text-sm text-gray-500 hover:text-indigo-600">GitHub</a>
+            <a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Support</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+  
+  <script>
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set default tab
+      switchTab('optimizer');
+      
+      // Initialize charts
+      initCharts();
+    });
+    
+    // Tab switching
+    function switchTab(tabId) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabId).classList.remove('hidden');
+    }
+    
+    // Content source selection
+    function setContentSource(source) {
+      // Hide all source inputs
+      document.querySelectorAll('.content-source-input').forEach(input => {
+        input.classList.add('hidden');
+      });
+      
+      // Show selected source input
+      document.getElementById(source + '-content').classList.remove('hidden');
+      
+      // Update button styles
+      document.querySelectorAll('.content-source-input').forEach(btn => {
+        btn.classList.remove('bg-indigo-100', 'text-indigo-700');
+        btn.classList.add('bg-gray-100', 'text-gray-700');
+      });
+      
+      // Highlight selected button
+      event.target.classList.remove('bg-gray-100', 'text-gray-700');
+      event.target.classList.add('bg-indigo-100', 'text-indigo-700');
+    }
+    
+    // Content analysis
+    function analyzeContent() {
+      // Show loading state
+      const button = event.target;
+      const originalText = button.innerHTML;
+      button.innerHTML = '<span class="flex items-center"><svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Analyzing<span class="loading-dots"></span></span>';
+      
+      // Simulate analysis delay
+      setTimeout(() => {
+        // Show results
+        document.getElementById('analysis-results').classList.remove('hidden');
+        
+        // Reset button
+        button.innerHTML = originalText;
+        
+        // Scroll to results
+        document.getElementById('analysis-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 2000);
+    }
+    
+    // Toggle content view
+    function toggleView(view) {
+      // Update button styles
+      const buttons = event.target.parentElement.querySelectorAll('button');
+      buttons.forEach(btn => {
+        btn.classList.remove('bg-indigo-100', 'text-indigo-700');
+        btn.classList.add('bg-gray-100', 'text-gray-700');
+      });
+      
+      // Highlight selected button
+      event.target.classList.remove('bg-gray-100', 'text-gray-700');
+      event.target.classList.add('bg-indigo-100', 'text-indigo-700');
+      
+      // In a real app, this would switch between content views
+    }
+    
+    // Show projected impact
+    function showProjectedImpact() {
+      document.getElementById('projected-impact').classList.remove('hidden');
+      document.getElementById('projected-impact').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    // Initialize charts
+    function initCharts() {
+      // Visibility trend chart
+      if (document.getElementById('visibilityChart')) {
+        const visCtx = document.getElementById('visibilityChart').getContext('2d');
+        new Chart(visCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              label: 'LLM Visibility Score',
+              data: [42, 49, 55, 62, 70, 78],
+              borderColor: 'rgb(99, 102, 241)',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100
+              }
+            }
+          }
+        });
+      }
+      
+      // Impact chart
+      if (document.getElementById('impactChart')) {
+        const impactCtx = document.getElementById('impactChart').getContext('2d');
+        new Chart(impactCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Entity Clarity', 'Factual Structure', 'Semantic Hierarchy', 'Citation Potential'],
+            datasets: [
+              {
+                label: 'Before',
+                data: [45, 62, 58, 40],
+                backgroundColor: 'rgba(156, 163, 175, 0.5)',
+                borderColor: 'rgb(156, 163, 175)',
+                borderWidth: 1
+              },
+              {
+                label: 'After',
+                data: [92, 88, 85, 76],
+                backgroundColor: 'rgba(79, 70, 229, 0.5)',
+                borderColor: 'rgb(79, 70, 229)',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100
+              }
+            }
+          }
+        });
+      }
+      
+      // Analytics chart
+      if (document.getElementById('analyticsChart')) {
+        const analyticsCtx = document.getElementById('analyticsChart').getContext('2d');
+        new Chart(analyticsCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [
+              {
+                label: 'LLM Citations',
+                data: [42, 53, 62, 78, 91, 110, 132, 155, 180, 202, 225, 248],
+                borderColor: 'rgb(79, 70, 229)',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                tension: 0.3,
+                fill: true
+              },
+              {
+                label: 'Citation Rate (%)',
+                data: [8.4, 9.2, 10.5, 11.8, 12.6, 13.5, 14.8, 15.6, 16.4, 17.2, 17.8, 18.2],
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: 'rgba(16, 185, 129, 0.0)',
+                tension: 0.3,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Citations'
+                }
+              },
+              y1: {
+                beginAtZero: true,
+                position: 'right',
+                title: {
+                  display: true,
+                  text: 'Rate (%)'
+                },
+                grid: {
+                  drawOnChartArea: false
+                },
+                max: 30
+              }
+            }
+          }
+        });
+      }
+      
+      // Sources chart
+      if (document.getElementById('sourcesChart')) {
+        const sourcesCtx = document.getElementById('sourcesChart').getContext('2d');
+        new Chart(sourcesCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['ChatGPT', 'Bing AI', 'Google Bard', 'Claude', 'Others'],
+            datasets: [{
+              data: [42, 28, 15, 10, 5],
+              backgroundColor: [
+                'rgba(79, 70, 229, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(107, 114, 128, 0.8)'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            }
+          }
+        });
+      }
+    }
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'95f6fa9fe3b07ccb',t:'MTc1MjU1ODU5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
